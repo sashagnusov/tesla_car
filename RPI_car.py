@@ -75,7 +75,7 @@ def getAngle_point(x, y, x_to, y_to, vector_dir):  # Принимает на в�
 def getAngle(pointStart, pointStop, pointDir):
     return getAngle_point(pointStart.x, pointStart.y, pointStop.x, pointStop.y, makeVectorDir(pointStart, pointDir))
 
-
+move = Moving()
 markers = [[0, 0], [29.7, 0], [0, 42], [29.7, 42], [0, 84], [29.7, 84],
            [0, 126], [29.7, 126], [0, 168], [29.7, 168], [0, 210], [29.7, 210],
            [59.4, 0], [89.1, 0], [59.4, 42], [89.1, 42], [59.4, 84], [89.1, 84],
@@ -136,11 +136,11 @@ while True:
             angle = getAngle(Point(center_x_absolute, center_y_absolute), Point(markers[idm][0], markers[idm][1]), Point(up_x_absolute, up_y_absolute))
             if(not rotate and (10 <= angle and angle <= 350)):
                 rotate = True
-                if(angle > 180) rotate_left()
-                else rotate_right()
+                if(angle > 180) move.rotate_left()
+                else move.rotate_right()
             if(rotate and (10 >= angle or angle >= 350)):
                 rotate = False
-                move_forward()
+                move.move_forward()
             #print(angle)
         '''cv2.aruco.drawDetectedMarkers(frame, corners, ids)
         cv2.line(frame, (x0, 0), (x0, height), (255, 0, 0))
