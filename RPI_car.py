@@ -47,10 +47,10 @@ class Vector:
         self.x = x
         self.y = y
 
-    def __mul__(self, other):  # Скалярное произведение векторов, символ - *
+    def __mul__(self, other):  
         return self.x * other.x + self.y * other.y
 
-    def __mod__(self, other):  # Векторное произведение векторов, символ - %
+    def __mod__(self, other):  
         return self.x * other.y - self.y * other.x
 
     def __len__(self):
@@ -67,9 +67,9 @@ def makeVectorDir(pointStart, pointDir):
     return Vector(pointDir.x - pointStart.x, pointDir.y - pointStart.y)
 
 
-def getAngle_point(x, y, x_to, y_to, vector_dir):  # Принимает на вход x, y - наши координаты, x_to, y_to -
-    vector_move = Vector(x_to - x, y_to - y)  # координаты точки финиша, vector_dir - вектор направления
-    return (math.degrees(math.atan2(vector_dir * vector_move, vector_dir % vector_move)) + MARGIN) % 360  # В градусах
+def getAngle_point(x, y, x_to, y_to, vector_dir):  
+    vector_move = Vector(x_to - x, y_to - y)  
+    return (math.degrees(math.atan2(vector_dir * vector_move, vector_dir % vector_move)) + MARGIN) % 360  
 
 
 def getAngle(pointStart, pointStop, pointDir):
@@ -82,10 +82,10 @@ markers = [[0, 0], [29.7, 0], [0, 42], [29.7, 42], [0, 84], [29.7, 84],
            [59.4, 126], [89.1, 126], [59.4, 168], [89.1, 168], [59.4, 210], [89.1, 210],
            [118.8, 0], [148.5, 0], [118.8, 42], [148.5, 42], [118.8, 84], [148.5, 84],
            [118.8, 126], [148.5, 126], [118.8, 168], [148.5, 168], [118.8, 210], [148.5, 210]
-           ]  # Тестовая фигня с маркерами
+           ] 
 idm = 2
 
-cap = cv2.VideoCapture(1)  # Захват камеры в переменную
+cap = cv2.VideoCapture(0)  
 # dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_1000)
 dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
 # dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
@@ -96,27 +96,25 @@ while True:
     ret, frame = cap.read()
     height = len(frame)
     width = len(frame[0])
-    l = 40.  # Длина вектора для определения угла
-    center_x = width // 2  # поворота системы координат
+    l = 40.  
+    center_x = width // 2  
     center_y = height // 2
     up_x = width // 2
     up_y = 0
-    # Тут начинаются операции над кадром
+  
     gray_color = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # Углы, идентификаторы и что-то, чем мы не пользуемся, но необходимо считать
     corners, ids, rejectedImgpoints = cv2.aruco.detectMarkers(gray_color, dictionary)
 
     if len(corners) > 0:
-        # Оставь надежду всяк сюда входящий
         x0, y0 = corners[0][0][0]
         x1, y1 = corners[0][0][3]
         # x2, y2 = x0 + l, y0
         x2, y2 = np.float32(x0 + l), y0
         vector_1_0 = Vector(x1 - x0, y1 - y0)
         vector_2_0 = Vector(x2 - x0, y2 - y0)
-        scalar_mult = vector_1_0 * vector_2_0
-        vector_mult = vector_1_0 % vector_2_0
-        length = len(vector_1_0) * len(vector_2_0)
+        scalar_mult = (x1 - x0) * (x2 - x0) + (y1 - y0) * (y2 - y0)
+        vector_mult = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
+        length = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2) * math.sqrt((x2 - x0) ** 2 + (y2 - y0) ** 2)
         sin = vector_mult / length
         cos = scalar_mult / length
         center_y -= y0
@@ -131,13 +129,17 @@ while True:
             marker_x, marker_y = markers[int(ids[0])]
             center_x_absolute = center_x1 - marker_x
             center_y_absolute = center_y1 - marker_y
+            if(abs(center_x_absolute - markers[idm][0]) < 20 and abs(center_y_absolute - markers[idm][1]) < 20):
+                move.stop()
             up_x_absolute = up_x1 - marker_x
             up_y_absolute = up_y1 - marker_y
             angle = getAngle(Point(center_x_absolute, center_y_absolute), Point(markers[idm][0], markers[idm][1]), Point(up_x_absolute, up_y_absolute))
             if(not rotate and (10 <= angle and angle <= 350)):
                 rotate = True
-                if(angle > 180) move.rotate_left()
-                else move.rotate_right()
+                if angle > 180:
+                    move.rotate_left()
+                else:
+                    move.rotate_right()
             if(rotate and (10 >= angle or angle >= 350)):
                 rotate = False
                 move.move_forward()
@@ -146,12 +148,11 @@ while True:
         cv2.line(frame, (x0, 0), (x0, height), (255, 0, 0))
         cv2.line(frame, (0, y0), (height, y0), (255, 0, 0))
         cv2.line(frame, (x0, y0), (x1, y1), (0, 0, 255))
-        cv2.line(frame, (x0, y0), (x2, y2), (0, 0, 255))'''
+        cv2.line(frame, (x0, y0), (x2, y2), (0, 0, 255))
     # Display the resulting frame
-    '''cv2.imshow('frame', frame)
+    cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
 # When everything done, release the capture
 cap.release()
 cv2.destroyAllWindows()'''
